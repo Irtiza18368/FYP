@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+        <style>
+
+            /*Background Gradient */
+            body{
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin: 0; 
+            }
+
+            /*Card Styling */
+            .login-card{
+                max-width: 400px;
+                width: 100%;
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                animation: fadeIn 0.8s ease-in-out;
+            }
+
+            @keyframes fadeIn{
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to{
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .input-group-text{
+                background: #667eea;
+                color: white;
+                border: none;
+            }
+
+            .form-control{
+                border-radius: 0 10px 10px 0 !important;
+            }
+
+            .btn-loading{
+                pointer-events: none;
+                opacity: 0.7;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="card login-card shadow-sm">
+                        <div class="card-body">
+                            <h2 class="text-center mb-4">Login</h2>
+                            <form method="post" class="needs-validate" novalidate>
+                                {% csrf_token %}
+
+                                <!--Username field with icon-->
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" id="username" name="username" class="form-control" required />
+                                    </div>
+                                </div>
+
+                                <!--Password field with icon-->
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" id="password" name="password" class="form-control" required />
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">Show</button>
+                                    </div>
+                                </div>
+
+                                <!--Remember Me-->
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="rememberMe">
+                                    <label class="form-check-label" for="rememberMe">Remember Me</label>
+                                </div>
+
+                                <!--Login Button-->
+                                <div class="d-grid">
+                                    <button type="submit" id="loginButton" class="btn btn-primary">
+                                        <span id="loginText">Login</span>
+                                        <span id="spinner" class="spinner-border spinner-border-sm d-none"></span>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!--Register Link-->
+                            <p class="mt-3 text-center"> Don't have an account? 
+                                <a href="{% url 'signup' %}" class="text-primary">Register</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+        <script>
+            document.getElementById('togglePassword').addEventListener('click', function(){
+                const passwordField = document.getElementById('password');
+                const isPasswordVisible = passwordField.type === 'text';
+
+                passwordField.type = isPasswordVisible ? 'password': 'text';
+
+                this.textContent = isPasswordVisible ? 'Show': 'Hide';
+            });
+
+            document.getElementById('loginButton').addEventListener('click', function(){
+                this.classList.add('btn-loading');
+                document.getElementById('loginText').textContent = 'Logging in...';
+                document.getElementById('spinner').classList.remove('d-none');
+            })
+        </script>
+
+    </body>
+</html>
