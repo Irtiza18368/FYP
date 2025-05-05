@@ -1,16 +1,18 @@
+#Importing necessary modules and classes
 from django.http import JsonResponse, HttpRequest
-from django.utils.timezone import now, timedelta
+from django.utils.timezone import now, timedelta #For working with current date/time
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect, render, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from .models import Task
-from .forms import SignupForm, LoginForm
-from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt #For disabling CSRF protection on views
+from .models import Task #Imported Task model
+from .forms import SignupForm, LoginForm #Imported custom forms
+from django.contrib import messages #For displaying messages in templates
 from django.contrib.auth.models import User
-from typing import Optional
+from typing import Optional #For handling JSON data
 import json
 
+#Function for assigning a category based on the task title keywords
 def categorize_task(title: str) -> str:
     if "meeting" in title.lower():
         return "Work"
@@ -21,10 +23,12 @@ def categorize_task(title: str) -> str:
     else:
         return "General"
 
+#Homepage view
 @csrf_exempt
 def homepage(request: HttpRequest):
     return render(request, "Api/homepage.html")    
 
+#User signup view
 @csrf_exempt
 def user_signup(request: HttpRequest):
     if request.method == "POST":
@@ -41,6 +45,7 @@ def user_signup(request: HttpRequest):
         form = SignupForm()
     return render(request, "Api/Signup.html", {"form": form})
 
+#User login view
 @csrf_exempt
 def user_login(request: HttpRequest):
     if request.method == "POST":
@@ -58,11 +63,13 @@ def user_login(request: HttpRequest):
         form = LoginForm()
     return render(request, "Api/Login.html", {"form": form})
 
+#User logout view
 @csrf_exempt
 def logout(request: HttpRequest):
     logout(request)
     return redirect("login")
 
+#View for listing tasks or creating a new task
 @csrf_exempt
 def task_list(request:HttpRequest) -> JsonResponse:
     if request.method == "GET":
@@ -104,7 +111,7 @@ def task_list(request:HttpRequest) -> JsonResponse:
     
     return JsonResponse({"error": "Unsupported HTTP method"}, status=405)
 
-
+#View for retrieving, updating or deleting a task by ID
 @csrf_exempt
 def task_update(request:HttpRequest, task_id: Optional[int] = None) -> JsonResponse:
     if task_id is None:
