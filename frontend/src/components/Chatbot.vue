@@ -2,11 +2,16 @@
   <div class="chatbot-container" :class="{ 'chatbot-open': isOpen }">
     <div class="chatbot-header" @click="toggleChatbot">
       <div class="header-content">
-        <i class="bi bi-robot fs-4 me-2"></i>
-        <h4>AI Assistant</h4>
-        <span v-if="hasDeadlineReminders" class="reminder-badge">{{ deadlineReminders.length }}</span>
+        <svg class="robot-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12v8h2v-8c0-4.42 3.58-8 8-8s8 3.58 8 8v8h2v-8c0-5.52-4.48-10-10-10z" />
+          <circle cx="9" cy="13" r="1.5" />
+          <circle cx="15" cy="13" r="1.5" />
+          <path d="M18 19H6c-1.1 0-2-.9-2-2v-3h16v3c0 1.1-.9 2-2 2z" />
+        </svg>
+        <h4 v-if="isOpen">AI Assistant</h4>
+        <span v-if="isOpen && hasDeadlineReminders" class="reminder-badge">{{ deadlineReminders.length }}</span>
       </div>
-      <span class="toggle-icon">{{ isOpen ? 'x' : '+' }}</span>
+      <span v-if="isOpen" class="toggle-icon">x</span>
     </div>
     
     <div v-if="isOpen" class="chatbot-body">
@@ -31,7 +36,10 @@
       <div class="input-container glass-background">
         <input v-model="userInput" @keyup.enter="sendMessage" placeholder="Ask about deadlines or task priorities..." class="chat-input">
         <button @click="sendMessage" class="send-button">
-          <i class="bi bi-send"></i>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
         </button>
       </div>
     </div>
@@ -70,7 +78,7 @@ export default {
     const startReminderCheck = () => {
       reminderInterval.value = setInterval(() => {
         checkImmediateDeadlines();
-      }, 300000); // Check every 5 minutes
+      }, 300000);
     };
 
     const checkImmediateDeadlines = () => {
@@ -371,24 +379,77 @@ export default {
 
 <style>
 
-.chatbot-container {
+.robot-icon{
+  width: 40px;
+  height: 40px;
+  fill: white;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.chatbot-container:not(.chatbot-open) .robot-icon{
+  width: 50px;
+  height: 50px;
+  animation: float 3s ease-in-out infinite, subtle-bounce 2s ease-in-out infinite;
+}
+
+.chatbot-open .robot-icon{
+  transform: scale(0.9);
+}
+
+@keyframes float{
+  0%, 100% { transform: translateY(0);}
+  50% { transform: translateY(-5px);}
+}
+
+@keyframes subtle-bounce{
+  0%, 100% {transform: translateY(0) scale(1);}
+  50% { transform: translateY(-3px) scale(1.05);}
+}
+
+.chatbot-header:hover .robot-icon{
+  animation: none;
+  transform: scale(1.1);
+}
+
+.chatbot-container:not(.chatbot-open) .header-content::after{
+  content: "";
   position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: white;
+  transform: translateX(-50%) rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.chatbot-container:not(.chatbot-open):hover .header-content::after{
+  opacity: 1;
+}
+
+.chatbot-container {
+  position: fixed;
+  bottom: 30px;
   right: 30px;
-  width: 380px;
+  width: auto;
+  max-width: 380px;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(15px);
-  border-radius: 20px;
+  border-radius: 50px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   z-index: 1000;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   overflow: hidden;
-  max-height: 70px;
+  max-height: 60px;
 }
 
 .chatbot-open {
   max-height: 65vh;
   height: 600px;
-  transform: translateY(0);
+  width: 380px;
+  border-radius: 20px;
 }
 
 .chatbot-open .toggle-icon {
@@ -396,7 +457,7 @@ transform: rotate(90deg);
 }
 
 .chatbot-header {
-  padding: 15px 20px;
+  padding: 12px 20px;
   background: linear-gradient(135deg, #6a11cb, #2575fc);
   color: white;
   cursor: pointer;
@@ -404,8 +465,7 @@ transform: rotate(90deg);
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  min-height: 60px;
 }
 
 .chatbot-header::before{
@@ -422,6 +482,7 @@ transform: rotate(30deg);
 .header-content {
 display: flex;
 align-items: center;
+gap: 12px;
 }
 
 .toggle-icon {
@@ -547,8 +608,15 @@ align-items: center;
   box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
 }
 
-.send-button i {
-font-size: 1.1rem;
+.send-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: white;
+  transition: all 0.3s ease;
+}
+
+.send-button:hover svg{
+  transform: translateX(2px);
 }
 
 /* Custom scrollbar to match your app's style */
