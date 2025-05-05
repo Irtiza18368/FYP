@@ -28,6 +28,39 @@
             </div>
           </transition>
 
+          <div class="mb-4">
+            <h2 class="fw-bold mb-3">Theme Settings</h2>
+
+            <!--Theme Selection-->
+            <div class="mb-3">
+              <label class="form-label fw-bold d-flex align-items-center">Theme Mode</label>
+              <div class="btn-group w-100" role="group">
+                <button v-for="mode in ['light', 'dark', 'system']" :key="mode" @click="setThemeMode(mode)" :class="['btn', {'btn-gradient': settings.theme.mode === mode, 'btn-outline-secondary': settings.theme.mode !== mode}]">
+                  {{ capitalizeFirstLetter(mode) }}
+                </button>
+              </div>
+            </div>
+
+            <!--Color Palette-->
+            <div class="mb-3">
+              <label class="form-label fw-bold d-flex align-items-center">Primary Color</label>
+              <input v-model="settings.theme.primaryColor" type="color" class="form-control form-control-color glass-input w-100" @change="updateThemeColors">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold d-flex align-items-center">Secondary Color</label>
+              <input v-model="settings.theme.secondaryColor" type="color" class="form-control form-control-color glass-input w-100" @change="updateThemeColors">
+            </div>
+
+            <!--Theme Previewer-->
+            <div class="theme-preview p-3 rounded-3 mb-3" :style="{'background': `linear-gradient(135deg, ${settings.theme.primaryColor}, ${settings.theme.secondaryColor})`}">
+              <div class="d-flex justify-content-between">
+                <span class="text-white">A</span>
+                <span class="text-white">B</span>
+              </div>
+            </div>
+          </div>
+
           <!--Reminder Frequency-->
           <div v-if="settings.notifications.enabled" class="mb-3 fade-in">
             <label class="form-label fw-bold d-flex align-items-center">Reminder Frequency</label>
@@ -61,7 +94,7 @@
 <script lang="js">
 
 import { useSettingsStore } from '../store/SettingsStore';
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 
 export default {
   setup(){
@@ -125,6 +158,21 @@ export default {
       unsavedChanges.value = false;
     };
 
+    const setThemeMode = (mode) => {
+      settings.theme.mode = mode;
+      settings.applyTheme();
+      trackChange();
+    };
+
+    const updateThemeColors = () => {
+      settings.applyTheme();
+      trackChange();
+    };
+
+    const capitalizeFirstLetter = (string) => {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    };
+
     return{
       settings,
       snackbar,
@@ -132,7 +180,10 @@ export default {
       dismissSnackbar,
       saveSettings,
       unsavedChanges,
-      trackChange
+      trackChange,
+      setThemeMode,
+      updateThemeColors,
+      capitalizeFirstLetter,
     };
   },
 };
@@ -140,6 +191,20 @@ export default {
 </script>
 
 <style>
+
+:root{
+  --primary-color: #8e2de2;
+  --secondary-color: #4a00e0;
+  --text-color: #f5f5f5;
+  --bg-color: #121212;
+  --card-bg: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="light"]{
+  --text-color: #333;
+  --bg-color: #f5f5f5;
+  --card-bg: rgba(255, 255, 255, 0.8);
+}
 
 .unsaved-button{
   animation: floatWobble 2s ease-in-out infinite;
@@ -155,7 +220,8 @@ export default {
 }
 
 body{
-  background: linear-gradient(270deg, #8e2de2, #4a00e0);
+  background: linear-gradient(270deg, var(--primary-color), var(--secondary-color));
+  color: var(--text-color);
   background-size: 400% 400%;
   animation: backgroundMove 20s ease infinite;
 }
@@ -168,7 +234,8 @@ body{
 
 /* Glass-Neumorphic Card */
 .glass-card {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--card-bg);
+  color: var(--text-color);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -189,14 +256,22 @@ body{
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  color: #f5f5f5;
+  color: var(--text-color);
   padding: 12px;
   font-size: 1rem;
-  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.2),
-              inset -2px -2px 6px rgba(255, 255, 255, 0.05);
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.2), inset -2px -2px 6px rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease-in-out;
 }
 
+.theme-preview{
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.theme-preview:hover{
+  transform: scale(1.02);
+}
 
 .glass-input:focus {
   background: rgba(255, 255, 255, 0.15);
@@ -205,10 +280,26 @@ body{
   outline: none;
 }
 
+.form-control-color{
+  height: 45px;
+  padding: 2px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.form-control-color::webkit-color-swatch{
+  border: none;
+  border-radius: 6px;
+}
+
+.form-control-color::webkit-color-swatch-wrapper{
+  padding: 0;
+}
+
 
 /* Gradient Button */
 .btn-gradient {
-  background: linear-gradient(135deg, #8e2de2, #4a00e0);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   border: none;
   color: #fff;
   padding: 12px;
