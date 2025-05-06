@@ -1,9 +1,13 @@
 <template>
+  <!--Main container for the task list with padding-->
   <div class="container py-5">
+    <!--Glass-styling card wrapper-->
     <div class="card custom-shadow glass-card">
+      <!--Card header with title-->
       <div class="card-header bg-primary text-white text-center">
         <h2 class="mb-0">Task List</h2>
       </div>
+      <!--Main body of the card-->
       <div class="card-body">
 
         <!--Search Input-->
@@ -35,7 +39,7 @@
               
               <input v-model="editedTask.dueTime" type="time" class="form-control mb-2 glass-input" placeholder="Due Time (24-hour format):" />
 
-              
+              <!--Save/Cancel Buttons-->
               <div class="d-flex justify-content-end">
                 <button class="btn btn-success btn-sm me-2 glass-button" @click="saveTaskHandler(task.id)">
                   <i class="bi bi-save me-1"></i> Save Task
@@ -63,6 +67,7 @@
                   <small><strong>Due Date:</strong>{{ formatDisplayDate(task.dueDate) }}</small>
                   <small><strong>Due Time:</strong>{{ formatDueTime(task.dueTime) }}</small>
                 </div>
+                <!--Action buttons-->
                 <button class="btn btn-warning btn-sm me-2 glass-button" @click="enableEditMode(task)">Edit Task</button>
                 <button class="btn btn-danger btn-sm me-2 glass-button" @click="deleteTask(task.id)">Delete Task</button>
                 <button class="btn btn-success btn-sm me-2 glass-button" @click="markTaskAsCompleteAndRedirect(task)">Mark as Complete</button>
@@ -111,22 +116,25 @@ export default
   data() 
   {
     return {
-      showSuggestion: false,
-      suggestedTask: null,
-      completedTask: null,
-      editTaskId: null,
-      editedTask: {},
-      searchQuery: '',
-      filterCategory: '',
+      showSuggestion: false, //Controlling modal visibility
+      suggestedTask: null, //Holding the suggested next task
+      completedTask: null, //Storing last completed task
+      editTaskId: null, //ID of the task in edit mode
+      editedTask: {}, //Temporarily edited task data
+      searchQuery: '', //Search input string
+      filterCategory: '', //Selected catagory for filtering
     };
   },
+  //Computed properties for derived data
   computed:{
     ...mapState(useTaskStore, ['tasks']),
 
+    //Getting all the task categories
     categories(){
       return this.tasks ? [...new Set(this.tasks.map(task => task.category))] : [];
     },
 
+    //Filtering the tasks based on search and category and excluding completed ones
     filteredTasks(){
       return this.tasks.filter(task => {
         const matchesSearch = task.title.toLowerCase().includes(this.searchQuery.toLowerCase());
@@ -142,10 +150,12 @@ export default
   },
   mounted() 
   {
+    //Loading the tasks and starting live countdown timer
     this.fetchTasks();
     this.startRealTimeTimer();
   },
   beforeDestroy(){
+    //Stopping the timer when component is destroyed.
     clearInterval(this.timer);
   },
   methods:
@@ -161,11 +171,13 @@ export default
     ]),
 
 
+    //Starting to work on the suggested task by opening the edit mode
     async startSuggestedTask(){
       this.showSuggestion = false;
       this.enableEditMode(this.suggestedTask);
     },
 
+    //Assigning a priority class to a task based on due date proximity
     getPriorityClass(dueDate){
       if(!dueDate) return '';
 
@@ -179,6 +191,7 @@ export default
       return 'priority-low';
     },
 
+    //Opening modal and preparing suggested task
     async markTaskAsCompleteAndRedirect(task){
       try{
         await this.markTaskAsComplete(task);
@@ -196,6 +209,7 @@ export default
       }
     },
     
+    //Suggest the next best task to do
     getNextTaskSuggestion(completedTask){
       if (!this.tasks || this.tasks.length === 0) return null;
 
@@ -217,6 +231,7 @@ export default
       })[0];
     },
     
+    //Switching to edit mode
     enableEditMode(task){
       this.editTaskId = task.id;
       this.editedTask = {
@@ -226,6 +241,7 @@ export default
       };
     },
 
+    //Formatting a date string for display
     formatDisplayDate(dateString){
       if(!dateString) return 'N/A';
       try{
@@ -236,6 +252,7 @@ export default
       }
     },  
 
+    //Format a date string to be used in input fields(YYYY-MM-DD)
     formatDateForInput(dateString){
       if(!dateString) return '';
       const date = new Date(dateString);
@@ -253,6 +270,7 @@ export default
       this.editedTask = {};
     },
 
+    //Formatting due time from 12 to 24 hour format
     formatDueTime(dueTime){
       if (!dueTime) return "N/A";
 
