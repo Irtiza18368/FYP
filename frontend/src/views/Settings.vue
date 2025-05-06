@@ -1,15 +1,20 @@
 <template>
+  <!--Settings container with responsive design and glassmorphism effect-->
   <div class="container py-5">
+    <!--Card with glassmorphism effect-->
     <div class="card shadow-lg glass-card">
+      <!--Card header with title-->
       <div class="card-header bg-primary text-white text-center">
         <h2 class="card-title mb-0">Settings</h2>
       </div>
       <div class="card-body">
+        <!--Form for preventing default submission behavior-->
         <form @submit.prevent="saveSettings">
 
           <!--Notification Toggling-->
           <div class="mb-3 d-flex justify-content-between align-items-center">
             <label class="form-label fw-bold mb-0 d-flex align-items-center">Notifications</label>
+            <!--Custom Toggle switch component-->
             <label class="switch">
               <input v-model="settings.notifications.enabled" type="checkbox" id="notifications" @change="trackChange" />
               <span class="slider"></span>
@@ -28,6 +33,7 @@
             </div>
           </transition>
 
+          <!--Theme settings section-->
           <div class="mb-4">
             <h2 class="fw-bold mb-3">Theme Settings</h2>
 
@@ -98,23 +104,30 @@ import { ref, onUnmounted } from 'vue';
 
 export default {
   setup(){
+    //Initializing settings store
     const settings = useSettingsStore();
+    
+    //Snackbar reactive state
     const snackbar = ref({
       message: '',
       duration: 3000,
     });
 
+    //Queue for multiple snackbar messages
     const snackbarQueue = ref([]);
     let snackbarTimer = null;
     
+    //Loading saved settings when component mounts
     settings.loadSettings();
 
+    //Function for showing snackbar messages
     const showSnackbar = (message, duration = 3000) => {
       if (snackbar.value.message){
         snackbarQueue.value.push({message, duration});
         return;
       }
 
+      //Showing the snackbar
       snackbar.value.message = message;
       snackbar.value.duration = duration;
 
@@ -123,10 +136,12 @@ export default {
       }, duration);
     };
 
+    //Function for dismissing the current snackbar
     const dismissSnackbar = () => {
       clearTimeout(snackbarTimer);
       snackbar.value.message = '';
 
+      //Show next snackbar in queue if there is one
       setTimeout(()=> {
         if (snackbarQueue.value.length > 0){
           const next = snackbarQueue.value.shift();
@@ -135,8 +150,10 @@ export default {
       }, 300);
     };
 
+    //Tracking if there is any unsaved changes
     const unsavedChanges = ref(false);
 
+    //Tracking changes to settings and handling notification permissions
     const trackChange = () => {
       unsavedChanges.value = true;
 
@@ -192,6 +209,7 @@ export default {
 
 <style>
 
+/* CSS variables for theming */
 :root{
   --primary-color: #8e2de2;
   --secondary-color: #4a00e0;
@@ -200,12 +218,14 @@ export default {
   --card-bg: rgba(255, 255, 255, 0.12);
 }
 
+/* Light theme variables */
 [data-theme="light"]{
   --text-color: #333;
   --bg-color: #f5f5f5;
   --card-bg: rgba(255, 255, 255, 0.8);
 }
 
+/* Animation for unsaved changes button */
 .unsaved-button{
   animation: floatWobble 2s ease-in-out infinite;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.3), 0 0 24px rgba(142, 45, 226, 0.4);
@@ -219,6 +239,7 @@ export default {
   100% { transform: translateY(0) rotate(0deg);}
 }
 
+/* Body styling with animated gradient background */
 body{
   background: linear-gradient(270deg, var(--primary-color), var(--secondary-color));
   color: var(--text-color);
