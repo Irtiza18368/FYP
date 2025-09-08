@@ -33,39 +33,6 @@
             </div>
           </transition>
 
-          <!--Theme settings section-->
-          <div class="mb-4">
-            <h2 class="fw-bold mb-3">Theme Settings</h2>
-
-            <!--Theme Selection-->
-            <div class="mb-3">
-              <label class="form-label fw-bold d-flex align-items-center">Theme Mode</label>
-              <div class="btn-group w-100" role="group">
-                <button v-for="mode in ['light', 'dark', 'system']" :key="mode" @click="setThemeMode(mode)" :class="['btn', {'btn-gradient': settings.theme.mode === mode, 'btn-outline-secondary': settings.theme.mode !== mode}]">
-                  {{ capitalizeFirstLetter(mode) }}
-                </button>
-              </div>
-            </div>
-
-            <!--Color Palette-->
-            <div class="mb-3">
-              <label class="form-label fw-bold d-flex align-items-center">Primary Color</label>
-              <input v-model="settings.theme.primaryColor" type="color" class="form-control form-control-color glass-input w-100" @change="updateThemeColors">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold d-flex align-items-center">Secondary Color</label>
-              <input v-model="settings.theme.secondaryColor" type="color" class="form-control form-control-color glass-input w-100" @change="updateThemeColors">
-            </div>
-
-            <!--Theme Previewer-->
-            <div class="theme-preview p-3 rounded-3 mb-3" :style="{'background': `linear-gradient(135deg, ${settings.theme.primaryColor}, ${settings.theme.secondaryColor})`}">
-              <div class="d-flex justify-content-between">
-                <span class="text-white">A</span>
-                <span class="text-white">B</span>
-              </div>
-            </div>
-          </div>
 
           <!--Reminder Frequency-->
           <div v-if="settings.notifications.enabled" class="mb-3 fade-in">
@@ -100,7 +67,7 @@
 <script lang="js">
 
 import { useSettingsStore } from '../store/SettingsStore';
-import { ref, onUnmounted } from 'vue';
+import { ref} from 'vue';
 
 export default {
   setup(){
@@ -175,21 +142,6 @@ export default {
       unsavedChanges.value = false;
     };
 
-    const setThemeMode = (mode) => {
-      settings.theme.mode = mode;
-      settings.applyTheme();
-      trackChange();
-    };
-
-    const updateThemeColors = () => {
-      settings.applyTheme();
-      trackChange();
-    };
-
-    const capitalizeFirstLetter = (string) => {
-      return string.charAt(0).toUpperCase() + string.slice(1);
-    };
-
     return{
       settings,
       snackbar,
@@ -198,9 +150,6 @@ export default {
       saveSettings,
       unsavedChanges,
       trackChange,
-      setThemeMode,
-      updateThemeColors,
-      capitalizeFirstLetter,
     };
   },
 };
@@ -218,12 +167,6 @@ export default {
   --card-bg: rgba(255, 255, 255, 0.12);
 }
 
-/* Light theme variables */
-[data-theme="light"]{
-  --text-color: #333;
-  --bg-color: #f5f5f5;
-  --card-bg: rgba(255, 255, 255, 0.8);
-}
 
 /* Animation for unsaved changes button */
 .unsaved-button{
@@ -284,37 +227,11 @@ body{
   transition: all 0.3s ease-in-out;
 }
 
-.theme-preview{
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-}
-
-.theme-preview:hover{
-  transform: scale(1.02);
-}
-
 .glass-input:focus {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 12px rgba(157, 80, 187, 0.4);
   outline: none;
-}
-
-.form-control-color{
-  height: 45px;
-  padding: 2px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.form-control-color::webkit-color-swatch{
-  border: none;
-  border-radius: 6px;
-}
-
-.form-control-color::webkit-color-swatch-wrapper{
-  padding: 0;
 }
 
 
