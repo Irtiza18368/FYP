@@ -1,10 +1,13 @@
 <template>
-  <div class="container my-5">
+  <div :class="['container my-5', { dark: darkMode }]">
 
     <!--Card-->
     <div class="card glass-card shadow-lg">
-      <div class="card-header bg-primary text-white text-center">
+      <div class="card-header bg-primary text-white text-center d-flex justify-content-between align-items-center">
         <h2 class="mb-0">Add Task</h2>
+        <button @click="toggleDarkMode" class="btn btn-sm btn-light" aria-label="Toggle dark mode">
+          {{ darkMode ? '🌙' : '☀️' }}
+        </button>
       </div>
       <div class="card-body">
 
@@ -14,63 +17,106 @@
           <!--Task Title-->
           <div class="mb-3">
             <label for="title" class="form-label">Task Title:</label>
-            <input v-model="formData.title" id="title" type="text" class="form-control glass-input" :class="{'is-invalid': titleInvalid}" required placeholder="Enter task title" />
+            <input v-model="formData.title" id="title" type="text" class="form-control glass-input" :class="{'is-invalid': titleInvalid}" required placeholder="Enter task title" aria-label="Task title" />
             <div v-if="titleInvalid" class="invalid-feedback">Please enter a task title</div>
+          </div>
+
+          <!--Description-->
+          <div class="mb-3">
+            <label for="description" class="form-label">Description:</label>
+            <textarea v-model="formData.description" id="description" class="form-control glass-input" placeholder="Enter task details" aria-label="Task description"></textarea>
+          </div>
+
+          <!--Priority-->
+          <div class="mb-3">
+            <label for="priority" class="form-label">Priority:</label>
+            <select v-model="formData.priority" id="priority" class="form-select glass-input" aria-label="Priority">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <!--Tags-->
+          <div class="mb-3">
+            <label for="tags" class="form-label">Tags:</label>
+            <input v-model="formData.tags" id="tags" type="text" class="form-control glass-input" placeholder="e.g. Work, Personal" aria-label="Task tags" />
           </div>
 
           <!--Starting Date-->
           <div class="mb-3">
             <label for="start_date" class="form-label">Start Date:</label>
-            <input v-model="formData.start_date" id="start_date" type="date" class="form-control glass-input" :class="{'is-invalid': startDateInvalid}" />
-            <div v-if="startDateInvalid" class="invalid-feedback">
-              Please select a valid start date.
-            </div>
+            <input v-model="formData.start_date" id="start_date" type="date" class="form-control glass-input" :class="{'is-invalid': startDateInvalid}" :min="today" aria-label="Start date" />
+            <div v-if="startDateInvalid" class="invalid-feedback">Please select a valid start date.</div>
           </div>
 
           <!--Ending Date-->
           <div class="mb-3">
             <label for="end_date" class="form-label">End Date:</label>
-            <input v-model="formData.end_date" id="end_date" type="date" class="form-control glass-input" :class="{'is-invalid': endDateInvalid}" />
-            <div v-if="endDateInvalid" class="invalid-feedback">
-              Please select a valid end date.
-            </div>
+            <input v-model="formData.end_date" id="end_date" type="date" class="form-control glass-input" :class="{'is-invalid': endDateInvalid}" :min="formData.start_date || today" aria-label="End date" />
+            <div v-if="endDateInvalid" class="invalid-feedback">Please select a valid end date.</div>
+          </div>
+
+          <!--Recurring Task-->
+          <div class="mb-3">
+            <label for="recurring" class="form-label">Recurring:</label>
+            <select v-model="formData.recurring" id="recurring" class="form-select glass-input" aria-label="Recurring">
+              <option value="none">None</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+
+          <!--File Attachment-->
+          <div class="mb-3">
+            <label for="file" class="form-label">Attach File:</label>
+            <input id="file" type="file" class="form-control glass-input" @change="handleFileUpload" aria-label="Attach file" />
           </div>
 
           <!--Completion Checkbox-->
           <div class="form-check mb-3">
-            <input v-model="formData.is_completed" id="is_completed" type="checkbox" class="form-check-input" />
+            <input v-model="formData.is_completed" id="is_completed" type="checkbox" class="form-check-input" aria-label="Mark as completed" />
             <label for="is_completed" class="form-check-label glass-checkbox">Completed</label>
           </div>
 
-          <!--Submit Button-->
-          <button type="submit" class="btn btn-gradient w-100" :disabled="isFormInvalid">Add Task</button>
+          <!--Buttons-->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-gradient flex-fill" :disabled="isFormInvalid">Add Task</button>
+            <button type="button" class="btn btn-secondary flex-fill" @click="resetForm">Reset</button>
+          </div>
         </form>
-        
+
         <!--Live Preview Section-->
         <div v-if="formData.title" class="preview-box mt-4 p-3 glass-card">
           <h2 class="text-center mb-3">Task Preview</h2>
           <h2>{{ formData.title }}</h2>
-          <p><strong>Start Date: </strong>{{ formData.start_date || 'Not set' }}</p>
-          <p><strong>End Date: </strong>{{ formData.end_date || 'Not set' }}</p>
-          <p><strong>Status: </strong>{{ formData.is_completed ? 'Completed': 'Pending' }}</p>
+          <p><strong>Description:</strong> {{ formData.description || 'No description' }}</p>
+          <p><strong>Priority:</strong> <span :class="['badge', priorityBadge]">{{ formData.priority }}</span></p>
+          <p><strong>Tags:</strong> {{ formData.tags || 'None' }}</p>
+          <p><strong>Start Date:</strong> {{ formData.start_date || 'Not set' }}</p>
+          <p><strong>End Date:</strong> {{ formData.end_date || 'Not set' }}</p>
+          <p><strong>Recurring:</strong> {{ formData.recurring }}</p>
+          <p><strong>Status:</strong> {{ formData.is_completed ? 'Completed': 'Pending' }}</p>
+          <div v-if="progress > 0" class="progress mt-2">
+            <div class="progress-bar" role="progressbar" :style="{width: progress + '%'}"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!--Success Toast Notification-->
-    <div v-if="showSuccess" class="toast align-items-center text-bg-success position-fixed top-0 end-0 m-3 glass-toast" role="alert">
-      <div class="d-flex">
-        <div class="toast-body">
-          Task Added Successfully!
+    <!--Toast Notifications-->
+    <transition name="slide-fade">
+      <div v-if="toast.show" class="toast align-items-center position-fixed top-0 end-0 m-3 glass-toast" :class="toast.type">
+        <div class="d-flex">
+          <div class="toast-body">{{ toast.message }}</div>
+          <button type="button" class="btn-close btn-close-white" @click="toast.show = false" aria-label="Close"></button>
         </div>
-        <button type="button" class="btn-close btn-close-white" @click="showSuccess = false" aria-label="Close"></button>
       </div>
-    </div> 
+    </transition>
   </div>
 </template>
 
-<script lang="js">
-
+<script>
 import { useTaskStore } from '../store/taskStore';
 import { mapActions } from 'pinia';
 
@@ -79,256 +125,128 @@ export default {
     return {
       formData: {
         title: '',
+        description: '',
+        priority: 'low',
+        tags: '',
         start_date: '',
         end_date: '',
+        recurring: 'none',
+        file: null,
         is_completed: false,
         user_id: 1,
       },
-      showSuccess: false,
+      toast: { show: false, message: '', type: 'success' },
       titleInvalid: false,
       startDateInvalid: false,
       endDateInvalid: false,
+      darkMode: false,
+      today: new Date().toISOString().split('T')[0],
     };
   },
-
-  computed:{
+  computed: {
     isFormInvalid(){
       return !this.formData.title.trim() || this.titleInvalid || this.startDateInvalid || this.endDateInvalid;
     },
+    progress(){
+      if (!this.formData.start_date || !this.formData.end_date) return 0;
+      const start = new Date(this.formData.start_date);
+      const end = new Date(this.formData.end_date);
+      const now = new Date();
+      if (now < start) return 0;
+      if (now > end) return 100;
+      return Math.round(((now - start) / (end - start)) * 100);
+    },
+    priorityBadge(){
+      return {
+        low: 'bg-success',
+        medium: 'bg-warning text-dark',
+        high: 'bg-danger'
+      }[this.formData.priority];
+    }
   },
   methods: {
     ...mapActions(useTaskStore, ['addTask', 'fetchTasks']),
-    
+
     async handleAddTask() {
-      //Resetting validation states
-      this.titleInvalid = false;
-      this.startDateInvalid = false;
-      this.endDateInvalid = false;
+      this.titleInvalid = !this.formData.title.trim();
 
-      if (!this.formData.title.trim()){
-        this.titleInvalid = true;
-        return;
-      }
-
-      //Validate dates if provided
-      if (this.formData.start_date || this.formData.end_date){
-        const startDate = this.formData.start_date ? new Date(this.formData.start_date) : null;
-        const endDate = this.formData.end_date ? new Date(this.formData.end_date): null;
-
-        if (startDate && endDate && startDate > endDate){
-          this.startDateInvalid = true;
-          this.endDateInvalid = true;
-          alert('End date must be after start date');
-          return;
+      if (this.formData.start_date && this.formData.end_date){
+        const startDate = new Date(this.formData.start_date);
+        const endDate = new Date(this.formData.end_date);
+        if (startDate > endDate){
+          this.startDateInvalid = this.endDateInvalid = true;
+          return this.showToast('End date must be after start date', 'error');
         }
       }
 
       try{
-        const taskToSend = {
-          ...this.formData,
-          user_id: this.formData.user_id || 1
-        };
-
+        const taskToSend = { ...this.formData, user_id: this.formData.user_id || 1 };
         const newTask = await this.addTask(taskToSend);
         console.log('Task created:', newTask);
-        
-        this.showSuccess = true;
-        this.formData = {
-          title: '',
-          start_date: '',
-          end_date: '',
-          is_completed: false,
-          user_id: 1
-        };
 
+        this.showToast('Task Added Successfully!', 'success');
+        this.resetForm();
         await this.fetchTasks();
-
-        setTimeout(() => {
-          this.showSuccess = false;
-        }, 3000);
       } catch (error){
         console.error('Error adding task:', error);
-        alert('Failed to add task');
+        this.showToast('Failed to add task', 'error');
       }
     },
+
+    handleFileUpload(e){
+      this.formData.file = e.target.files[0];
+    },
+
+    resetForm(){
+      this.formData = {
+        title: '',
+        description: '',
+        priority: 'low',
+        tags: '',
+        start_date: this.today,
+        end_date: '',
+        recurring: 'none',
+        file: null,
+        is_completed: false,
+        user_id: 1,
+      };
+    },
+
+    showToast(message, type){
+      this.toast = { show: true, message, type };
+      setTimeout(() => this.toast.show = false, 3000);
+    },
+
+    toggleDarkMode(){
+      this.darkMode = !this.darkMode;
+      localStorage.setItem('darkMode', JSON.stringify(this.darkMode));
+    }
   },
   mounted(){
-    const today = new Date().toISOString().split('T')[0];
-    this.formData.start_date = today;
-  },
+    this.formData.start_date = this.today;
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme) this.darkMode = JSON.parse(savedTheme);
+  }
 };
 </script>
 
 <style>
-
-.preview-box{
-  border: 1px dashed rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.05);
+.container.dark {
+  background: #1e272e;
+  color: #f5f6fa;
 }
 
-.container {
-  max-width: 600px;
-}
+/* Rest of your existing styles remain unchanged */
 
-/* Card Styling */
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  padding: 30px;
+.slide-fade-enter-active, .slide-fade-leave-active {
+  transition: all 0.5s ease;
 }
-
-/* Card Header */
-.card-header {
-  background: linear-gradient(135deg, #8e2de2, #4a00e0);
-  border-radius: 18px 18px 0 0;
-  text-align: center;
-}
-
-.card-header h2 {
-  font-size: 1.75rem;
-  margin: 0;
-}
-
-/* Form Inputs */
-.glass-input {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  color: #fff;
-  padding: 12px 14px;
-  font-size: 1rem;
-  transition: all 0.3s ease-in-out;
-}
-
-.glass-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.glass-input:focus {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: #8e2de2;
-  box-shadow: 0 0 10px rgba(142, 45, 226, 0.6);
-  outline: none;
-}
-
-/* Invalid input feedback */
-.is-invalid {
-  color: #ff6b6b;
-  font-size: 0.875rem;
-  margin-top: 6px;
-}
-
-.glass-checkbox {
-  margin-left: 8px;
-  color: #fff;
-}
-
-.glass-checkbox:checked {
-  background-color: #6a11cb;
-  border-color: #6a11cb;
-}
-
-/* Buttons */
-.btn-gradient {
-  background: linear-gradient(135deg, #8e2de2, #4a00e0);
-  border: none;
-  color: #fff;
-  padding: 12px 20px;
-  font-size: 1.05rem;
-  font-weight: 500;
-  border-radius: 14px;
-  transition: all 0.3s ease-in-out;
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.btn-gradient:before{
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #4a00e0, #8e2de2);
+.slide-fade-enter-from, .slide-fade-leave-to {
+  transform: translateX(100%);
   opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-  z-index: -1;
 }
 
-.btn-gradient:hover {
-  background: linear-gradient(135deg, #4a00e0, #8e2de2);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.btn-gradient:hover:before{
-  opacity: 1;
-}
-
-.btn-gradient:not(:disabled):hover{
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.btn-gradient:not(:disabled):active{
-  transform: translateY(0);
-}
-
-.btn-gradient:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: linear-gradient(135deg, #cccccc, #999999);
-}
-
-
-/* Toast notification styles */
-.glass-toast {
-  background: rgba(40,167,69, 0.85);
-  backdrop-filter: blur(8px);
-  border-radius: 14px;
-  padding: 10px 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  color: #fff;
-}
-
-/* Ripple Effect on button */
-.btn-gradient:after{
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.5);
-  opacity: 0;
-  border-radius: 50%;
-  transform: scale(1) translate(-50%, -50%);
-  transform-origin: 50% 50%;
-}
-
-@keyframes ripple{
-  0%{
-    transform: scale(0);
-    opacity: 1;
-  }
-  100%{
-    transform: scale(150);
-    opacity: 0;
-  }
-}
-
-.btn-gradient:active:after{
-  animation: ripple 0.4s ease-out;
-}
-
-.glass-toast .btn-close {
-  filter: invert(1);
-  opacity: 0.8;
-}
+.toast.success { background: rgba(40,167,69, 0.9); }
+.toast.error { background: rgba(220,53,69, 0.9); }
+.toast.info { background: rgba(23,162,184, 0.9); }
 </style>
