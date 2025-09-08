@@ -12,6 +12,9 @@
         <div class="hero-section p-5 text-white rounded glass-background">
           <div class="animated-background"></div>
           <h2 class="display-4 greeting-text">{{ dashboardStore.greeting }}, {{ dashboardStore.username }}!</h2>
+          <p class="mt-3 fs-5">
+            You have {{ dashboardStore.upcomingDeadlines.length }} upcoming deadlines
+          </p>
         </div>
       </transition>
 
@@ -34,10 +37,29 @@
                     <div>
                       <strong>{{ task.title }}</strong> - Due Date: {{ dashboardStore.formatDate(task.end_date) }}
                       <span v-if="task.dueTime">at {{ dashboardStore.formatTime(task.dueTime) }}</span>
+
+                      <!-- Progress Bar -->
+                      <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar gradient-progress" role="progressbar" :style="{width: `${100 - (task.daysLeft / task.totalDays) * 100}%`}"></div>
+                      </div>
                     </div>
-                    <span class="badge bg-warning text-dark ms-2">
-                      {{ task.daysLeft }} days left
+                    
+                    <!--Badge with urgency-->
+                    <span :class="['badge', {
+                      'bg-danger': task.daysLeft <= 0,
+                      'bg-warning text-dark': task.daysLeft > 0 && task.daysLeft <= 3,
+                      'bg-success': task.daysLeft > 3,
+                    }]"
+                    >
+                    {{ task.daysLeft <= 0 ? 'Due!' : `${task.daysLeft} days left` }}
                     </span>
+                  </div>
+
+                  <!--Quick Actions-->
+                  <div class="mt-2 d-flex gap-2">
+                    <button class="btn btn-sm btn-success" @click="markAsDone(task)">✔</button>
+                    <button class="btn btn-sm btn-outline-warning" @click="snoozeTask(task)">⏰</button>
+                    <button class="btn btn-sm btn-outline-info" @click="editTask(task)">✏️</button>
                   </div>
                 </li>
               </ul>
@@ -48,32 +70,12 @@
 
       <!--Feature Showcase-->
       <div class="row mt-5">
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4 mb-4" v-for="feature in features" :key="feature.title">
           <div class="card h-100">
-            <div class="card-body">
-              <i class="bi bi-calendar-check fs-1 gradient-text"></i>
-              <h2 class="card-title mt-3">Smart Reminders</h2>
-              <p class="card-text">Get timely reminders for your tasks and deadlines.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-          <div class="card h-100">
-            <div class="card-body">
-              <i class="bi bi-list-task fs-1 gradient-text"></i>
-              <h2 class="card-title mt-3">Task Management</h2>
-              <p class="card-text">Easily create, edit and organize your tasks</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-          <div class="card h-100">
-            <div class="card-body">
-              <i class="bi bi-clock-history fs-1 gradient-text"></i>
-              <h2 class="card-title mt-3">Progress Tracking</h2>
-              <p class="card-text">Track your progress with visual indicators.</p>
+            <div class="card-body text-center">
+              <i :class="feature.icon + ' fs-1 gradient-text'"></i>
+              <h2 class="card-title mt-3">{{ feature.title }}</h2>
+              <p class="card-text">{{ feature.text }}</p>
             </div>
           </div>
         </div>
@@ -104,9 +106,12 @@
       </div>
     </div>
 
-    <div v-for="(toast, index) in toasts" :key="index">
-      <Toast :message="toast.message" />
-    </div>
+    <!--Toasts-->
+    <transition-group name="toast" tag="div">
+      <div v-for="(toast, index) in toasts" :key="index">
+        <Toast :message="toast.message" />
+      </div>
+    </transition-group>
   </div>
   <Chatbot />
 </template>
@@ -117,12 +122,14 @@ import Toast from '../components/Toast.vue';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useDashboardStore } from '../store/Dashboard';
 import Chatbot from '../components/Chatbot.vue';
+import { useRouter } from 'vue-router';
 
 export default{
   name: 'Home',
   components: {Toast, Chatbot},
   setup(){
     const dashboardStore = useDashboardStore();
+    const router = useRouter();
     const showInactivityModal = ref(false);
     const toasts = ref([]);
     const themeInterval = ref(null);
@@ -163,6 +170,7 @@ export default{
 
     const logout = () => {
       clearTimeout(autoLogoutTimer);
+      showToast('Logged out');
     };
 
     const showToast = (message) => {
@@ -171,6 +179,20 @@ export default{
         toasts.value.shift();
       }, 3000);
     };
+
+    const markAsDone = (task) => {
+      dashboardStore.removeTask(task.id);
+      showToast(`Task "${task.title}" marked as done ✔`);
+    }
+
+    const snoozeTask = (task) => {
+      task.daysLeft += 1;
+      showToast(`Task "${task.title}" snoozed ⏰ (1 day extra)`);
+    }
+
+    const editTask = (task) => {
+      showToast(`Edit task "${task.title}" ✏️`);
+    }
 
 
     onMounted(()=>{
@@ -203,6 +225,12 @@ export default{
         }
       }
     );
+
+    const features = [
+      { icon: "bi bi-calendar-check", title: "Smart Reminders", text: "Get timely reminders for your tasks and deadlines." },
+      { icon: "bi bi-list-task", title: "Task Management", text: "Easily create, edit and organize your tasks." },
+      { icon: "bi bi-clock-history", title: "Progress Tracking", text: "Track your progress with visual indicators." }
+    ]
     
     return{
       dashboardStore,
@@ -211,13 +239,40 @@ export default{
       logout,
       toasts,
       showToast,
-      themeInterval
+      themeInterval,
+      markAsDone,
+      snoozeTask,
+      editTask,
+      features
     };
   },
 };
 </script>
 
 <style>
+.toast-enter-active, .toast-leave-active{
+  transition: all 0.4s ease;
+}
+
+.toast-enter-from{
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.toast-leave-to{
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.progress-bar{
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+.list-group-item .btn-sm{
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
 
 @keyframes float{
   0%{ transform: translateY(0px);}
